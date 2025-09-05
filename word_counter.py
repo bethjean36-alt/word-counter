@@ -1,89 +1,71 @@
 import sys
-import string
+import re
 from collections import Counter
-import os
 
-def word_counter(text):
+def count_words_chars_lines(text):
     """
-    Analyzes a given text to count words, characters, and lines,
-    and finds the three most common words.
-
-    Args:
-        text (str): The input text to analyze.
-
-    Returns:
-        tuple: A tuple containing:
-               - An integer for the word count.
-               - An integer for the character count.
-               - An integer for the line count.
-               - A list of the three most common words and their counts.
+    Counts words, characters, and lines in a given text.
+    Handles punctuation and ignores case for word counting.
     """
-    # Count characters and lines
+    # Count lines by splitting the text at newlines
+    lines = text.split('\n')
+    line_count = len(lines)
+
+    # Count characters
     char_count = len(text)
-    line_count = text.count('\n') + 1 if text else 0
 
-    # Process text for word counting and frequency analysis
-    # Convert to lowercase to make counting case-insensitive
-    processed_text = text.lower()
+    # Convert text to lowercase and remove punctuation for word counting
+    cleaned_text = re.sub(r'[^\w\s]', '', text.lower())
     
-    # Remove punctuation
-    translator = str.maketrans('', '', string.punctuation)
-    processed_text = processed_text.translate(translator)
-    
-    # Split text into words and count them
-    words = processed_text.split()
+    # Split the cleaned text into words
+    words = cleaned_text.split()
     word_count = len(words)
     
-    # Find the 3 most common words
-    word_counts = Counter(words)
-    most_common_words = word_counts.most_common(3)
+    return word_count, char_count, line_count, words
+
+def find_most_common_words(word_list, n=3):
+    """
+    Finds the n most common words and their frequencies from a list of words.
+    """
+    # Use Counter to count word frequencies
+    word_counts = Counter(word_list)
     
-    return word_count, char_count, line_count, most_common_words
+    # Find the n most common words
+    most_common = word_counts.most_common(n)
+    
+    return most_common
 
 def main():
     """
-    Main function to read text from either a command-line argument,
-    a file, or standard input, and then display the analysis results.
+    Main function to run the script.
+    It checks for a command-line argument and processes the text.
     """
-    text_to_analyze = ""
-    # Check if a command-line argument is provided
-    if len(sys.argv) > 1:
-        # Check if the argument is a file path
-        if os.path.exists(sys.argv[1]):
-            try:
-                with open(sys.argv[1], 'r', encoding='utf-8') as file:
-                    text_to_analyze = file.read()
-            except Exception as e:
-                print(f"An error occurred while reading the file: {e}")
-                sys.exit(1)
-        else:
-            # If the argument is not a file, treat it as the text to analyze.
-            text_to_analyze = sys.argv[1]
-    else:
-        # If no argument is provided, read from standard input
-        print("Reading from standard input. Press Ctrl+D (or Ctrl+Z on Windows) to stop.")
-        text_to_analyze = sys.stdin.read()
+    # Check if a text string was provided as a command-line argument
+    if len(sys.argv) < 2:
+        print("Error: No text string provided.")
+        print("Usage: python word_counter.py \"Your text string here.\"")
+        sys.exit(1)
 
-    # If there's no text, print a message and exit
-    if not text_to_analyze:
-        print("No text was provided for analysis.")
-        return
+    # Get the text from the command-line argument
+    text_string = sys.argv[1]
 
-    # Perform the analysis
-    word_count, char_count, line_count, most_common = word_counter(text_to_analyze)
+    # Process the text
+    word_count, char_count, line_count, word_list = count_words_chars_lines(text_string)
+    most_common_words = find_most_common_words(word_list)
 
-    # Print the results
-    print("\n--- Analysis Results ---")
-    print(f"Total Words: {word_count}")
-    print(f"Total Characters: {char_count}")
-    print(f"Total Lines: {line_count}")
+    # Display the results
+    print(f"--- Word Counter Report ---")
+    print(f"Text provided: \"{text_string}\"")
+    print(f"Number of words: {word_count}")
+    print(f"Number of characters: {char_count}")
+    print(f"Number of lines: {line_count}")
     
-    print("\nTop 3 Most Common Words:")
-    if most_common:
-        for word, count in most_common:
-            print(f"  '{word}': {count} times")
+    print("\nTop 3 most common words:")
+    if most_common_words:
+        for word, freq in most_common_words:
+            print(f"  - '{word}': {freq} times")
     else:
-        print("  (No words found)")
+        print("  - No words found.")
 
 if __name__ == "__main__":
     main()
